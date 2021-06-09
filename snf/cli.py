@@ -6,6 +6,7 @@ from snf.experiments import (selfnorm_fc_mnist, exact_fc_mnist,
     selfnorm_glow_mnist, conv1x1_glow_mnist, 
     selfnorm_glow_cifar, conv1x1_glow_cifar,
     selfnorm_glow_imagenet, conv1x1_glow_imagenet,
+    geco_selfnorm_glow_mnist,
     snf_timescaling)
 
 parser = argparse.ArgumentParser(description='')

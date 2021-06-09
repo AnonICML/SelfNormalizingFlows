@@ -1,4 +1,8 @@
 # Self Normalizing Flows
+*Paper*: https://arxiv.org/abs/2011.07248
+
+*Blog Post*: http://keller.org/research/2020-10-21-self-normalizing-flows/
+
 ## Getting Started
 #### Install requirements with Anaconda:
 `conda env create -f conda_environment.yml`
@@ -35,6 +39,9 @@ To rerun the experiments from table 2:
 
 To recreate the results of figure 4, run:
 - `snf --name 'snf_timescaling'`
+
+To recreate the results of Table A.5 (using improved constrained optimization), run:
+- `snf --name 'geco_selfnorm_glow_mnist`
 
 ## Basics of the framework
 - All models are built using the `FlowSequential` module (see snf/layers/flowsequential.py)
@@ -85,3 +92,6 @@ The configuration dictionary is mainly used to modify the training procedure spe
 - `'sample_true_inv'`: *bool*, if True, generate samples from the true inverse of a self-normalizing flow model, in addition to samples from the approximate (fast) inverse.
 - `'plot_recon'`: *bool*, if True, plot reconstruction of training images.
 - `'log_timing'`: *bool*, if True, compute mean and std. of time per batch and time per sample. Print to screen and save as summary statistic of experiment.
+
+## Acknowledgements
+The Robert Bosch GmbH is acknowledged for financial support.

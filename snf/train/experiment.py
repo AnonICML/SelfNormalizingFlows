@@ -132,7 +132,8 @@ class Experiment:
 
     def get_loss(self, x):
         compute_expensive = not self.config['modified_grad']
-        lossval = -self.model.log_prob(x, compute_expensive=compute_expensive)        
+        lossval = -self.model.log_prob(x, compute_expensive=compute_expensive)  
+        lossval[lossval != lossval] = 0.0 # Replace NaN's with 0      
         lossval = (lossval).sum() / len(x)
         return lossval
 

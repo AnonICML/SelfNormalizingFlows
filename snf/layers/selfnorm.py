@@ -107,7 +107,9 @@ class SelfNormConv(ModifiedGradFlowLayer):
                  groups=1,
                  sym_recon_grad=False,
                  only_R_recon=False,
-                 recon_loss_weight=1.0):
+                 recon_loss_weight=1.0,
+                 recon_loss_lr=0.0,
+                 recon_alpha=0.9):
 
         super().__init__()
         self.kernel_size = _pair(kernel_size)
@@ -120,6 +122,9 @@ class SelfNormConv(ModifiedGradFlowLayer):
         self.sym_recon_grad = sym_recon_grad
         self.only_R_recon = only_R_recon
         self.recon_loss_weight = recon_loss_weight
+        self.recon_loss_lr = recon_loss_lr
+        self.recon_loss_ema = None
+        self.alpha = recon_alpha
         self.use_bias = bias
 
         self.reset_parameters()
@@ -202,12 +207,26 @@ class SelfNormConv(ModifiedGradFlowLayer):
 
         if recon_loss_weight_update is not None:
             self.recon_loss_weight = recon_loss_weight_update
-        recon_loss = self.recon_loss_weight * recon_loss.mean()
+
+        # Set NaN values to 0 for stability
+        recon_loss[recon_loss != recon_loss] = 0.0
+        recon_loss_weighted = self.recon_loss_weight * recon_loss.mean()
 
         # Using .backward call to add recon gradient
-        recon_loss.backward()
+        recon_loss_weighted.backward()
 
-        return recon_loss
+        # If using GECO (i.e. recon_loss_lr > 0.0) update recon_loss_weight from moving average
+        if self.recon_loss_lr > 0.0:
+            with torch.no_grad():
+                if self.recon_loss_ema is None:
+                    self.recon_loss_ema = recon_loss.mean()
+                else:
+                    self.recon_loss_ema = self.alpha * self.recon_loss_ema + (1 - self.alpha) * recon_loss.mean()
+                C_t = recon_loss.mean() + (self.recon_loss_ema - recon_loss.mean()).detach()
+                delta_rlw = torch.exp(self.recon_loss_lr * C_t)
+                self.recon_loss_weight = self.recon_loss_weight * delta_rlw
+
+        return recon_loss_weighted
 
     def sparse_toeplitz(self, input, context=None):
         if self.T_idxs is None or self.f_idxs is None:
